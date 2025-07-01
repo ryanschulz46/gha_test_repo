@@ -1,5 +1,14 @@
 name: Sync to S3 Stages
 
+
+env:
+  REPO_BUCKET_FOLDER: /stages/repo
+  DEV_BUCKET_FOLDER: /stages/dev
+  BETA_BUCKET_FOLDER: /stages/beta
+  GAMMA_BUCKET_FOLDER: /stages/gamma
+  PROD_BUCKET_FOLDER: /stages/prod
+
+
 on:
   push:
     branches:
@@ -10,7 +19,7 @@ permissions:
   contents: read    # Required to checkout the repository
 
 jobs:
-  sync-to-s3-stages:
+  sync-to-s3-repo:
     runs-on: ubuntu-latest
     environment: schulzry+release-center-test-339388639699
     
@@ -27,20 +36,30 @@ jobs:
       
       - name: Sync files to S3 repo
         run: |
-          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}/stages/repo --delete
+          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}${{ env.REPO_BUCKET_FOLDER }} --delete
 
-      - name: Sync files to S3 dev
+  sync-repo-to-non-prod:
+    runs-on: ubuntu-latest
+    environment: schulzry+release-center-test-339388639699
+    needs: deploy-dev
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: s3-sync-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Sync repo to dev
         run: |
-          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}/stages/dev --delete
+          aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.REPO_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.DEV_BUCKET_FOLDER }} --delete
 
       - name: Sync files to S3 beta
         run: |
-          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}/stages/beta --delete
-      
+          aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.DEV_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.BETA_BUCKET_FOLDER }} --delete
+
       - name: Sync files to S3 gamma
         run: |
-          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}/stages/beta --delete
-
-      - name: Sync files to S3 prod
-        run: |
-          aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}/stages/beta --delete
+          aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.BETA_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.GAMMA_BUCKET_FOLDER }} --delete
+      
