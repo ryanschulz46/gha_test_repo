@@ -38,7 +38,7 @@ jobs:
         run: |
           aws s3 sync . s3://${{ vars.S3_BUCKET_NAME }}${{ env.REPO_BUCKET_FOLDER }} --delete
 
-  sync-repo-to-non-prod:
+  sync-repo-to-all-pre-prod:
     runs-on: ubuntu-latest
     environment: schulzry+release-center-test-339388639699
     needs: sync-to-s3-repo
@@ -55,11 +55,27 @@ jobs:
         run: |
           aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.REPO_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.DEV_BUCKET_FOLDER }} --delete
 
-      - name: Sync files to S3 beta
+      - name: Sync dev to S3 beta
         run: |
           aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.DEV_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.BETA_BUCKET_FOLDER }} --delete
 
-      - name: Sync files to S3 gamma
+      - name: Sync beta to S3 gamma
         run: |
           aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.BETA_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.GAMMA_BUCKET_FOLDER }} --delete
-      
+
+  sync-repo-to-prod:
+    runs-on: ubuntu-latest
+    environment: schulzry+release-center-test-339388639699-prod-stage
+    needs: sync-repo-to-all-pre-prod
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-session-name: s3-sync-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Sync gamma to prod
+        run: |
+          aws s3 sync s3://${{ vars.S3_BUCKET_NAME }}${{ env.GAMMA_BUCKET_FOLDER }} s3://${{ vars.S3_BUCKET_NAME }}${{ env.PROD_BUCKET_FOLDER }} --delete
