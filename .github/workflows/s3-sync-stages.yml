@@ -41,7 +41,7 @@ jobs:
   sync-repo-to-non-prod:
     runs-on: ubuntu-latest
     environment: schulzry+release-center-test-339388639699
-    needs: deploy-dev
+    needs: sync-to-s3-repo
     
     steps:
       - name: Configure AWS credentials
