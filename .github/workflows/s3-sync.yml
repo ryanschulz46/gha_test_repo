@@ -22,7 +22,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.2.1
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          role-session-name: ${{ github.workflow }}-${{ github.run_id }}
+          role-session-name: s3-sync-${{ github.run_id }}
           aws-region: ${{ vars.AWS_REGION }}
       
       - name: Sync files to S3 bucket
