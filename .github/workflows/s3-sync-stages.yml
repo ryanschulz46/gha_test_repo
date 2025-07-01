@@ -1,4 +1,4 @@
-name: Sync to S3
+name: Sync to S3 Stages
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read    # Required to checkout the repository
 
 jobs:
-  sync-to-s3:
+  sync-to-s3-stages:
     runs-on: ubuntu-latest
     environment: schulzry+release-center-test-339388639699
     
